@@ -1,0 +1,57 @@
+name: Publish
+
+on:
+  push:
+    branches: [ release ]
+    tags: [ 'v*' ]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    # Only run when a version tag is pushed to the release branch
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run tests
+        run: ./gradlew test
+
+      - name: Publish to Maven Central (upload artifacts)
+        run: ./gradlew publishMavenPublicationToMavenCentralRepository
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+          SIGNING_KEY_ID: ${{ secrets.SIGNING_KEY_ID }}
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+
+      - name: Finalize Maven Central deployment
+        run: |
+          # Encode credentials as base64 for Bearer token
+          TOKEN=$(echo -n "$CENTRAL_USERNAME:$CENTRAL_PASSWORD" | base64)
+          # Trigger the deployment finalization with automatic publishing
+          curl --fail -X POST \
+            "https://ossrh-staging-api.central.sonatype.com/manual/upload/defaultRepository/dev.airportdata?publishing_type=automatic" \
+            -H "Authorization: Bearer $TOKEN"
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+
+      - name: Publish to GitHub Packages
+        run: ./gradlew publishMavenPublicationToGitHubPackagesRepository
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
