@@ -9,21 +9,28 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 21 = bytecode target / minimum supported, 25 = latest LTS, 27 = latest release
+        java: [ '21', '25', '27' ]
+
+    name: JDK ${{ matrix.java }}
 
     steps:
       - uses: actions/checkout@v7
 
-      - name: Set up JDK 21
+      # JDK 21 is the compile toolchain; the last listed version becomes JAVA_HOME and runs Gradle
+      - name: Set up JDK 21 and JDK ${{ matrix.java }}
         uses: actions/setup-java@v6
         with:
-          java-version: '21'
           distribution: 'temurin'
+          java-version: |
+            21
+            ${{ matrix.java }}
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
 
-      - name: Build
-        run: ./gradlew build
-
-      - name: Run tests
-        run: ./gradlew test
+      - name: Build and test on JDK ${{ matrix.java }}
+        run: ./gradlew build -PtestJdk=${{ matrix.java }}

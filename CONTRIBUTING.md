@@ -2,6 +2,9 @@
 
 ## Development Setup
 
+**Requirements:** any JDK from 17 to 27 to run Gradle (9.8). The library is compiled for JDK 21, and that toolchain
+is downloaded automatically if it isn't installed. CI builds and tests on JDK 21, 25 (LTS) and 27.
+
 1. Clone the repository:
    ```bash
    git clone https://github.com/aashishvanand/airport-data-kotlin.git
@@ -16,6 +19,7 @@
 3. Run tests:
    ```bash
    ./gradlew test
+   ./gradlew test -PtestJdk=27   # run the suite on a specific JDK
    ```
 
 ## Branch Strategy

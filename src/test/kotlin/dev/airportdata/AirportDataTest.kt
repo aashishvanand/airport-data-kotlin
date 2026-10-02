@@ -93,13 +93,11 @@ class AirportDataTest {
     @Test
     fun `should handle different airport types`() {
         val heliports = airportData.getAirportsByType("heliport")
-        assertTrue(heliports is List)
         if (heliports.isNotEmpty()) {
             assertTrue(heliports.all { it.type == "heliport" })
         }
 
         val seaplaneBases = airportData.getAirportsByType("seaplane_base")
-        assertTrue(seaplaneBases is List)
         if (seaplaneBases.isNotEmpty()) {
             assertTrue(seaplaneBases.all { it.type == "seaplane_base" })
         }
@@ -187,7 +185,7 @@ class AirportDataTest {
     fun `should retrieve a map of all available external links`() {
         val links = airportData.getAirportLinks("LHR")
         assertNotNull(links.wikipedia)
-        assertTrue(links.wikipedia!!.contains("Heathrow_Airport"))
+        assertTrue(links.wikipedia.contains("Heathrow_Airport"))
         assertNotNull(links.website)
     }
 
@@ -195,7 +193,7 @@ class AirportDataTest {
     fun `should handle airports with missing links gracefully`() {
         val links = airportData.getAirportLinks("HND")
         assertNotNull(links.wikipedia)
-        assertTrue(links.wikipedia!!.contains("Tokyo_International_Airport"))
+        assertTrue(links.wikipedia.contains("Tokyo_International_Airport"))
         assertNotNull(links.website)
     }
 
@@ -208,7 +206,7 @@ class AirportDataTest {
         val stats = airportData.getAirportStatsByCountry("SG")
         assertTrue(stats.total > 0)
         assertNotNull(stats.byType)
-        assertTrue(stats.timezones is List)
+        assertTrue(stats.timezones.isNotEmpty())
     }
 
     @Test

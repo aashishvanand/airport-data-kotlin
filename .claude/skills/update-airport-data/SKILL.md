@@ -69,8 +69,10 @@ Bump `version = "X.Y.Z"` in `build.gradle.kts`.
 ## 6. Verify locally (same checks as CI)
 
 ```bash
-# Gradle runs on JDK 17+. The JDK 21 toolchain is auto-provisioned by the foojay resolver.
-JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home ./gradlew build
+# Gradle runs on JDK 17+. The JDK 21 compile toolchain is auto-provisioned by the foojay resolver.
+# CI builds on JDK 21, 25 and 27. -PtestJdk runs the tests on a specific JDK.
+./gradlew build --warning-mode all
+./gradlew test -PtestJdk=27 --rerun-tasks
 grep -ho 'tests="[0-9]*".*errors="[0-9]*"' build/test-results/test/*.xml
 ```
 

@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "dev.airportdata"
-version = "1.0.1"
+version = "1.1.0"
 
 repositories {
     mavenCentral()
@@ -26,6 +26,11 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+
+    // Bytecode targets JDK 21; run the suite on a newer JDK with e.g. ./gradlew test -PtestJdk=27
+    providers.gradleProperty("testJdk").orNull?.let { testJdk ->
+        javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(testJdk.toInt())) })
+    }
 }
 
 kotlin {
@@ -113,9 +118,11 @@ signing {
     sign(publishing.publications["maven"])
 }
 
-// Don't fail the build if signing credentials are not available (e.g., local development)
+// Don't fail the build if signing credentials are not available (e.g., local development).
+// Resolved at configuration time so the check stays configuration-cache compatible.
 tasks.withType<Sign>().configureEach {
-    onlyIf { project.hasProperty("signing.key") || System.getenv("SIGNING_KEY") != null }
+    val hasSigningKey = providers.gradleProperty("signing.key").orElse(providers.environmentVariable("SIGNING_KEY")).isPresent
+    onlyIf { hasSigningKey }
 }
 
 // Task to compress airports.json into gzip for embedding
