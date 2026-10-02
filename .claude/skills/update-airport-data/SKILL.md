@@ -51,9 +51,16 @@ Nothing to commit here. The `compressAirportData` Gradle task gzips `data/airpor
 
 ## 4. Check for dependency updates
 
-The build uses Kotlin 1.9.24 and Gradle 8.7. `kotlinx-serialization-json` 1.6.3 is the last release that supports Kotlin 1.9,
-so only take compatible patch bumps here. A Kotlin 2.x / Gradle 9 upgrade is separate work, because it affects the signing and publish config.
-Check `.github/workflows/*.yml` action versions too.
+The build uses Kotlin 2.4.x, Gradle 9.x and the foojay toolchain resolver (`settings.gradle.kts`). Check for the latest stable versions,
+skipping -Beta/-RC releases:
+```bash
+v(){ curl -s "https://repo1.maven.org/maven2/$1/maven-metadata.xml" | grep -o '<version>[^<]*' | cut -d'>' -f2 | grep -vE -- '-(Beta|RC|M|dev|alpha|beta)' | tail -1; }
+v org/jetbrains/kotlin/kotlin-gradle-plugin; v org/jetbrains/kotlinx/kotlinx-serialization-json; v org/jetbrains/kotlinx/kotlinx-coroutines-test
+curl -s https://services.gradle.org/versions/current | python3 -c 'import json,sys;print(json.load(sys.stdin)["version"])'
+./gradlew wrapper --gradle-version <ver> && ./gradlew wrapper --gradle-version <ver>   # run twice so the wrapper jar/scripts update too
+```
+Keep `kotlinx-serialization-json` on a release that matches the Kotlin plugin version. Run `./gradlew build --warning-mode all`
+and fix any deprecations. Check `.github/workflows/*.yml` action versions too.
 
 ## 5. Bump the version (patch for data-only updates)
 
@@ -62,7 +69,7 @@ Bump `version = "X.Y.Z"` in `build.gradle.kts`.
 ## 6. Verify locally (same checks as CI)
 
 ```bash
-# Gradle 8.7 can't run on JDK 25. Use JDK 17 or 21. The build's toolchain is 21.
+# Gradle runs on JDK 17+. The JDK 21 toolchain is auto-provisioned by the foojay resolver.
 JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home ./gradlew build
 grep -ho 'tests="[0-9]*".*errors="[0-9]*"' build/test-results/test/*.xml
 ```
